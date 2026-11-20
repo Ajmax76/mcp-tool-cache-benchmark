@@ -38,9 +38,37 @@ The deterministic seed (`random.Random(42)`) mixes **450 valid dynamic-ID calls*
 
 ## 3. Standalone Reproduction
 
-```bash
-git clone [https://github.com/ajmax76/mcp-tool-cache-benchmark.git](https://github.com/ajmax76/mcp-tool-cache-benchmark.git)
-cd mcp-tool-cache-benchmark
-pip install sentence-transformers scikit-learn numpy
-python3 reproduce_11_engine_gauntlet.py
-Benchmark Results (1,000 Calls)#Engine / Model ArchitectureCache HitsExact ArgsStale Args ReturnedLatency (Cold CPU)1Exact SHA-256 (exact-match gateway mode)0 / 1,0000 (0.0%)02.2 µs2HF all-MiniLM-L6-v2 (common LiteLLM / GPTCache default)732 / 1,0000 (0.0%)73214,600.3 µs3HF BAAI/bge-small-en-v1.5 (common RedisVL default)839 / 1,0000 (0.0%)83927,420.6 µs4HF thenlper/gte-small839 / 1,0000 (0.0%)839166,089.9 µs5HF intfloat/e5-small-v2799 / 1,0000 (0.0%)79926,129.6 µs6HF paraphrase-MiniLM-L3-v2711 / 1,0000 (0.0%)7117,647.4 µs7Sklearn TF-IDF Char-Ngram (sim >= 0.92)0 / 1,0000 (0.0%)0498.9 µs8IDF-Weighted Token Overlap (BM25-style, >= 0.85)0 / 1,0000 (0.0%)0333.5 µs94-Shingle Jaccard Similarity (Exact LSH upper bound, >= 0.85)198 / 1,0000 (0.0%)198831.9 µs10SequenceMatcher (quick_ratio >= 0.90)591 / 1,0000 (0.0%)59135.9 µsRefAnaglyph v9.1.6 (closed-source C/WASM reference — not executed by script)450 / 1,000*450 (100.0%)0 (0.000% drift)12.8 µs p50 / 17.4 µs mean (p99=32.9 µs)*Notes:HuggingFace transformer latencies reflect cold CPU embedding inference (batch_size=32). Even on pre-warmed GPU (~1 ms), cosine similarity scores (0.9749 and 0.9896) are invariant.Anaglyph's 450 / 1,000 result reflects pre-registered tool schemas for the 4 valid tools (on a cold, zero-schema warm-up, the first call per template misses for 446 / 450 hits) and fails open cleanly on all 550 adversarial/out-of-range calls.
+    git clone https://github.com/ajmax76/mcp-tool-cache-benchmark.git
+    cd mcp-tool-cache-benchmark
+    pip install sentence-transformers scikit-learn numpy
+    python3 reproduce_11_engine_gauntlet.py
+
+### Benchmark Results (1,000 Calls)
+
+| # | Engine / Model Architecture | Cache Hits | Exact Args | Stale Args Returned | Latency (Cold CPU) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | Exact `SHA-256` (exact-match gateway mode) | 0 / 1,000 | 0 (0.0%) | 0 | 2.2 µs |
+| 2 | HF `all-MiniLM-L6-v2` (common LiteLLM / GPTCache default) | 732 / 1,000 | 0 (0.0%) | 732 | 14,600.3 µs |
+| 3 | HF `BAAI/bge-small-en-v1.5` (common RedisVL default) | 839 / 1,000 | 0 (0.0%) | 839 | 27,420.6 µs |
+| 4 | HF `thenlper/gte-small` | 839 / 1,000 | 0 (0.0%) | 839 | 166,089.9 µs |
+| 5 | HF `intfloat/e5-small-v2` | 799 / 1,000 | 0 (0.0%) | 799 | 26,129.6 µs |
+| 6 | HF `paraphrase-MiniLM-L3-v2` | 711 / 1,000 | 0 (0.0%) | 711 | 7,647.4 µs |
+| 7 | Sklearn TF-IDF Char-Ngram (`sim >= 0.92`) | 0 / 1,000 | 0 (0.0%) | 0 | 498.9 µs |
+| 8 | IDF-Weighted Token Overlap (BM25-style, `>= 0.85`) | 0 / 1,000 | 0 (0.0%) | 0 | 333.5 µs |
+| 9 | 4-Shingle Jaccard Similarity (Exact LSH upper bound, `>= 0.85`) | 198 / 1,000 | 0 (0.0%) | 198 | 831.9 µs |
+| 10 | `SequenceMatcher` (`quick_ratio >= 0.90`) | 591 / 1,000 | 0 (0.0%) | 591 | 35.9 µs |
+| **Ref** | **Anaglyph v9.1.6** *(closed-source C/WASM reference — not executed by this script)* | **450 / 1,000*** | **450 (100.0%)** | **0 (0.000% drift)** | **12.8 µs p50 / 17.4 µs mean (p99=32.9 µs)** |
+
+*\*Notes:*
+- *HuggingFace transformer latencies reflect cold CPU embedding inference (`batch_size=32`). Even on pre-warmed GPU (~1 ms), cosine similarity scores (`0.9749` and `0.9896`) are invariant.*
+- *Anaglyph's `450 / 1,000` result reflects pre-registered tool schemas for the 4 valid tools (on a cold, zero-schema warm-up, the first call per template misses for `446 / 450` hits) and fails open cleanly on all 550 adversarial/out-of-range calls.*
+
+---
+
+## 4. Reference Architecture & Integration Targets
+
+The **Anaglyph** reference engine is a zero-dependency C core compiled for direct embedding into gateway hot paths without external embedding RPCs:
+- **C ABI / Shared Library (`.so` / `.dylib`):** Go (`cgo`), Rust (`extern "C"` FFI), OpenResty/Nginx (`LuaJIT FFI`), Python C-extension.
+- **WebAssembly (`.wasm`):** Cloudflare Workers, Vercel Edge, Node/TypeScript proxies, and Envoy WASM filters.
+
+For the technical architecture brief, evaluation binary/WASM package, or testing against a custom embedding model (e.g., `langcache-embed-v3-small`, `text-embedding-3-small`), reach out at **arman979361@gmail.com**.
