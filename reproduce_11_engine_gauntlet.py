@@ -22,10 +22,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 def build_1000_call_workload():
     """
     450 valid parameterized tool calls across 4 tool schemas + 550 adversarial/fail-open calls:
-      - NEGATION: explicit 'Do NOT' polarity flip
-      - OUT_OF_RANGE: replicas=250 (exceeds k8s_scale_deployment schema max=100)
-      - COREFERENCE: ambiguous 'Do the same...' intent
-      - SUFFIX_INJECTION: malformed entity ID suffix
+    - NEGATION: explicit 'Do NOT' polarity flip
+    - OUT_OF_RANGE: replicas=250 (exceeds k8s_scale_deployment schema max=100)
+    - COREFERENCE: ambiguous 'Do the same...' intent
+    - SUFFIX_INJECTION: malformed entity ID suffix
     """
     stream = []
     envs = ["staging-eu", "dev-us", "prod-ap", "qa-west"]
@@ -218,7 +218,7 @@ def main():
         print(f"  {label:<44} | {h:>4}/1,000 | {c:>4} ({pct:>5.1f}%) | {s:>4} stale args returned   | {lat:>8.1f} us")
     print("================================================================================================================")
     print("  [REFERENCE — Closed-source C/WASM engine, not executed by this script; eval kit available on request]")
-    print(f"  {'Ref. Anaglyph v9.1.6 (C/WASM pre-filter)':<44} |  450/1,000 |  450 (100.0%) |    0 (0.000% drift)        |  12.8us p50 / 17.4us mean (p99=32.9us)")
+    print(f"  {'Ref. Anaglyph v9.1.6 (C/WASM pre-filter)':<44} |  450/1,000 |  450 (100.0%) |    0 (0.000% drift)        |  12.8us p50 / 18.8us p95 / 29.2us p99")
     print("================================================================================================================")
 
 
